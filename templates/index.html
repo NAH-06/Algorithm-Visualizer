@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Thuật toán - Đa tính năng</title>
+    <!-- NHÚNG THƯ VIỆN BẢN ĐỒ LEAFLET -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        :root {
+            --bg-body: #f5f7fa;
+            --text-main: #2c3e50;
+            --bg-panel: #ffffff;
+            --bg-graph-basic: #ffffff;
+            --border-color: #bdc3c7;
+            --node-bg: rgba(255, 255, 255, 0.9);
+            --input-bg: #ffffff;
+            --input-text: #000000;
+        }
+
+        body.dark-mode {
+            --bg-body: #1a1a2e;
+            --text-main: #ecf0f1;
+            --bg-panel: #16213e;
+            --bg-graph-basic: #0f3460;
+            --border-color: #535c68;
+            --node-bg: rgba(44, 62, 80, 0.9);
+            --input-bg: #2c3e50;
+            --input-text: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            transition: 0.3s;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        #theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--text-main);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        #theme-toggle:hover {
+            background-color: var(--text-main);
+            color: var(--bg-body);
+        }
+
+        #log-container {
+            max-width: 800px;
+            margin: 20px auto 0;
+            background-color: #2c3e50;
+            color: #00ff00;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            min-height: 24px;
+            border-left: 5px solid #e74c3c;
+        }
+
+        #array-container,
+        #graph-container,
+        #osm-map-container {
+            display: none;
+            position: relative;
+            width: 800px;
+            height: 500px;
+            margin: 20px auto;
+            border: 3px solid var(--border-color);
+            border-radius: 12px;
+            background-color: var(--bg-graph-basic);
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        #array-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            box-shadow: none;
+            gap: 8px;
+            height: 300px;
+        }
+
+        .bar {
+            width: 40px;
+            background-color: #3498db;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            transition: height 0.1s, background-color 0.1s;
+            border-radius: 4px 4px 0 0;
+        }
+
+        .node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-color: var(--node-bg);
+            color: var(--text-main);
+            border: 3px solid #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            transform: translate(-50%, -50%);
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .dist-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            white-space: nowrap;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .controls {
+            max-width: 1050px;
+            margin: 0 auto;
+            background-color: var(--bg-panel);
+            padding: 20px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        select,
+        input[type="text"] {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            outline: none;
+            background-color: var(--input-bg);
+            color: var(--input-text);
+        }
+
+        .btn-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        button,
+        .btn-blog {
+            cursor: pointer;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            transition: 0.2s;
+            height: 45px;
+            padding: 0 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+
+        #btn-run {
+            background-color: #2ecc71;
+            box-shadow: 0 4px 6px rgba(46, 204, 113, 0.3);
+        }
+
+        #btn-run:hover {
+            background-color: #27ae60;
+            transform: translateY(-2px);
+        }
+
+        #btn-pause {
+            background-color: #f39c12;
+            box-shadow: 0 4px 6px rgba(243, 156, 18, 0.3);
+            display: none;
+        }
+
+        .btn-blog {
+            background-color: #3498db;
+            margin-left: 10px;
+        }
+
+        .btn-blog:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        #btn-random {
+            background-color: #9b59b6;
+            padding: 0 12px;
+            font-size: 13px;
+            height: 38px;
+            box-shadow: 0 4px 6px rgba(155, 89, 182, 0.3);
+        }
+
+        #btn-search-osm {
+            background-color: #e74c3c;
+            height: 38px;
+            padding: 0 20px;
+        }
+
+        #btn-search-osm:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Hệ thống Mô phỏng Thuật toán</h2>
+    <button id="theme-toggle" onclick="toggleTheme()" style="height: auto; padding: 8px 15px;">🌙 Chế độ tối</button>
+    <div class="controls">
+        <div class="control-group">
+            <label><b>Phân loại:</b></label>
+            <select id="category-select" onchange="updateCategory()">
+                <option value="sorting">Thuật toán Sắp xếp</option>
+                <option value="graph">Thuật toán Đồ thị</option>
+            </select>
+        </div>
+
+        <div class="control-group" id="graph-type-group" style="display: none;">
+            <label><b>Kiểu đồ thị:</b></label>
+            <select id="graph-type-select" onchange="updateGraphType()">
+                <option value="basic">Đồ thị thường</option>
+                <option value="osm">Bản đồ thực tế (OSM)</option>
+            </select>
+        </div>
+
+        <div class="control-group" id="algo-group">
+            <label><b>Thuật toán:</b></label>
+            <select id="algo-select"></select>
+        </div>
+
+        <!-- Ô TÌM KIẾM ĐỊA ĐIỂM (Đã xóa list gợi ý) -->
+        <div class="control-group" id="osm-search-group"
+            style="display: none; flex-direction: row; align-items: flex-end; gap: 10px;">
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label><b>Điểm xuất phát:</b></label>
+                <input type="text" id="osm-start" placeholder="VD: Tòa nhà A1 PTIT" style="width: 170px;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <label><b>Điểm đến:</b></label>
+                <input type="text" id="osm-end" placeholder="VD: Sân bóng PTIT" style="width: 170px;">
+            </div>
+            <button id="btn-search-osm" onclick="searchOsmRoute()">🔍 Tìm</button>
+        </div>
+
+        <div class="control-group" id="input-group">
+            <label><b>Dữ liệu mảng:</b></label>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="array-input" placeholder="VD: 50, 20, 80" style="width: 150px;">
+                <button id="btn-random" onclick="generateRandomArray()">🎲 Ngẫu nhiên</button>
+            </div>
+        </div>
+
+        <div class="control-group speed-control">
+            <label><b>Tốc độ:</b></label>
+            <div style="display: flex; align-items: center; gap: 5px;">
+                <span style="font-size: 12px;">Nhanh</span>
+                <input type="range" id="speed-slider" min="20" max="1000" value="600">
+                <span style="font-size: 12px;">Chậm</span>
+            </div>
+        </div>
+
+        <div class="btn-container" id="run-container">
+            <button id="btn-run" onclick="startAlgorithm()">▶ Khởi chạy</button>
+            <button id="btn-pause" onclick="togglePause()">⏸ Tạm dừng</button>
+            <a href="/blog" class="btn-blog">📖 Đọc Lý Thuyết</a>
+        </div>
+    </div>
+    <div id="log-container">Nhấn "Khởi chạy" để bắt đầu mô phỏng...</div>
+
+    <div id="array-container"></div>
+    <div id="graph-container">
+        <svg id="graph-edges" width="100%" height="100%" style="position:absolute; top:0; left:0; z-index: 1;"></svg>
+        <div id="graph-nodes"></div>
+    </div>
+    <div id="osm-map-container" style="z-index: 1;"></div>
+
+    <script>
+        let currentRunId = 0;
+        let isPaused = false;
+        const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+        function stopSimulation() {
+            currentRunId++;
+            isPaused = false;
+            const btnPause = document.getElementById('btn-pause');
+            if (btnPause) {
+                btnPause.style.display = 'none';
+            }
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            document.getElementById('theme-toggle').innerHTML = document.body.classList.contains('dark-mode') ? '☀️ Chế độ sáng' : '🌙 Chế độ tối';
+        }
+
+        function generateRandomArray() {
+            stopSimulation();
+            const arr = Array.from({ length: Math.floor(Math.random() * 6) + 10 }, () => Math.floor(Math.random() * 81) + 10);
+            document.getElementById('array-input').value = arr.join(', ');
+        }
+
+        window.onload = function () { updateCategory(); generateRandomArray(); };
+
+        const nodesBasic = [
+            { id: 0, x: 200, y: 250, label: 'A' },
+            { id: 1, x: 400, y: 100, label: 'B' },
+            { id: 2, x: 400, y: 400, label: 'C' },
+            { id: 3, x: 600, y: 250, label: 'D' },
+            { id: 4, x: 750, y: 250, label: 'E' }
+        ];
+        const edgesBasic = [[0, 1, 4], [0, 2, 2], [1, 2, 5], [1, 3, 10], [2, 3, 3], [3, 4, 7]];
+
+        let currentNodes = []; let currentEdges = [];
+
+        function updateCategory() {
+            stopSimulation();
+            const category = document.getElementById('category-select').value;
+            document.getElementById('graph-type-group').style.display = 'none';
+            document.getElementById('input-group').style.display = 'none';
+            document.getElementById('osm-search-group').style.display = 'none';
+            document.getElementById('algo-group').style.display = 'none';
+            document.querySelector('.speed-control').style.display = 'none';
+            document.getElementById('btn-run').style.display = 'none';
+            document.getElementById('btn-pause').style.display = 'none';
+            document.getElementById('array-container').style.display = 'none';
+            document.getElementById('graph-container').style.display = 'none';
+            document.getElementById('osm-map-container').style.display = 'none';
+            document.getElementById('log-container').innerText = 'Nhấn "Khởi chạy" để bắt đầu mô phỏng...';
+            const algoSelect = document.getElementById('algo-select');
+            algoSelect.innerHTML = '';
+
+            if (category === 'sorting') {
+                document.getElementById('input-group').style.display = 'flex';
+                document.getElementById('algo-group').style.display = 'flex';
+                document.querySelector('.speed-control').style.display = 'flex';
+                document.getElementById('btn-run').style.display = 'block';
+                document.getElementById('array-container').style.display = 'flex';
+                algoSelect.innerHTML = `<option value="bubble">Bubble Sort</option><option value="selection">Selection Sort</option><option value="insertion">Insertion Sort</option><option value="quick">Quick Sort</option><option value="merge">Merge Sort</option><option value="radix">Radix Sort</option>`;
+            } else if (category === 'graph') {
+                document.getElementById('graph-type-group').style.display = 'flex';
+                updateGraphType();
+            }
+        }
+
+        function updateGraphType() {
+            stopSimulation();
+            const graphType = document.getElementById('graph-type-select').value;
+            const graphContainer = document.getElementById('graph-container');
+            const algoSelect = document.getElementById('algo-select');
+            document.getElementById('osm-search-group').style.display = 'none';
+            document.getElementById('osm-map-container').style.display = 'none';
+            document.getElementById('graph-container').style.display = 'none';
+            document.getElementById('algo-group').style.display = 'flex';
+            document.querySelector('.speed-control').style.display = 'flex';
+            document.getElementById('btn-run').style.display = 'block';
+
+            if (graphType === 'basic') {
+                document.getElementById('graph-container').style.display = 'block';
+                algoSelect.innerHTML = `<option value="dijkstra">Dijkstra (Tìm đường)</option><option value="bellman">Bellman-Ford (Tìm đường)</option><option value="bfs">BFS (Quét rộng)</option><option value="dfs">DFS (Đi sâu)</option><option value="prim">Prim (Cây khung)</option><option value="kruskal">Kruskal (Cây khung)</option>`;
+                currentNodes = nodesBasic; currentEdges = edgesBasic;
+                graphContainer.classList.remove('map-mode');
+                drawGraphInitial(currentEdges);
+            } else if (graphType === 'osm') {
+                document.getElementById('osm-search-group').style.display = 'flex';
+                document.getElementById('osm-map-container').style.display = 'block';
+                document.getElementById('algo-group').style.display = 'none';
+                document.querySelector('.speed-control').style.display = 'flex';
+                document.getElementById('btn-run').style.display = 'none';
+                document.getElementById('log-container').innerText = 'Gõ tên địa điểm hoặc click trực tiếp lên bản đồ.';
+                initOsmMap();
+            }
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btnPause = document.getElementById('btn-pause');
+            if (isPaused) {
+                btnPause.innerHTML = '▶ Tiếp tục';
+                btnPause.style.backgroundColor = '#3498db';
+            } else {
+                btnPause.innerHTML = '⏸ Tạm dừng';
+                btnPause.style.backgroundColor = '#f39c12';
+            }
+        }
+
+        function drawEdges(edgesData, finalPath = []) {
+            const svg = document.getElementById('graph-edges');
+            svg.innerHTML = '';
+            edgesData.forEach(edge => {
+                const u = edge[0]; const v = edge[1]; const w = edge[2];
+                const posU = currentNodes[u]; const posV = currentNodes[v];
+                let isFinalEdge = finalPath.some(p => (p[0] === u && p[1] === v) || (p[0] === v && p[1] === u));
+
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", posU.x); line.setAttribute("y1", posU.y);
+                line.setAttribute("x2", posV.x); line.setAttribute("y2", posV.y);
+                line.setAttribute("stroke", isFinalEdge ? "#e74c3c" : "#bdc3c7");
+                line.setAttribute("stroke-width", isFinalEdge ? "8" : "4");
+                svg.appendChild(line);
+
+                const midX = (posU.x + posV.x) / 2; const midY = (posU.y + posV.y) / 2 - 8;
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", midX); text.setAttribute("y", midY);
+                text.setAttribute("fill", isFinalEdge ? "#c0392b" : "#7f8c8d");
+                text.setAttribute("font-weight", "bold"); text.setAttribute("font-size", "14px");
+                text.setAttribute("text-anchor", "middle");
+                text.textContent = w;
+                svg.appendChild(text);
+            });
+        }
+
+        function drawGraphInitial(edges) {
+            drawEdges(edges);
+            const container = document.getElementById('graph-nodes');
+            container.innerHTML = '';
+            currentNodes.forEach(pos => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.style.left = pos.x + 'px'; node.style.top = pos.y + 'px';
+                node.innerText = pos.label;
+                container.appendChild(node);
+            });
+        }
+
+        function drawArray(stateObj) {
+            const arr = stateObj.array; const activeIndices = stateObj.active_indices;
+            const container = document.getElementById('array-container');
+            container.innerHTML = '';
+            arr.forEach((val, index) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                let height = val * 3; if (height > 250) height = 250 + (val % 50);
+                bar.style.height = height + 'px'; bar.innerText = val;
+                bar.style.backgroundColor = activeIndices.includes(index) ? '#e74c3c' : '#3498db';
+                container.appendChild(bar);
+            });
+        }
+
+        function drawGraphState(stateObj) {
+            if (stateObj.edges) { drawEdges(stateObj.edges, stateObj.final_path); }
+            const container = document.getElementById('graph-nodes');
+            container.innerHTML = '';
+            currentNodes.forEach((pos, index) => {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.style.left = pos.x + 'px'; node.style.top = pos.y + 'px';
+                node.innerText = pos.label;
+                if (stateObj.active_node === index) {
+                    node.style.backgroundColor = '#f1c40f'; node.style.borderColor = '#f39c12';
+                    node.style.transform = 'translate(-50%, -50%) scale(1.2)'; node.style.color = '#2c3e50';
+                } else if (stateObj.visited[index]) {
+                    node.style.backgroundColor = '#2ecc71'; node.style.borderColor = '#27ae60'; node.style.color = 'white';
+                }
+                let distVal = stateObj.dist[index];
+                if (distVal < 99999999) {
+                    const distLabel = document.createElement('div');
+                    distLabel.className = 'dist-label';
+                    const algo = document.getElementById('algo-select').value;
+                    if (['dijkstra', 'bellman', 'prim'].includes(algo)) {
+                        distLabel.innerText = distVal === 0 ? 'Start' : distVal;
+                    } else if (['bfs', 'dfs'].includes(algo)) {
+                        distLabel.innerText = distVal === 0 ? 'Start' : `Step ${distVal}`;
+                    } else {
+                        distLabel.innerText = distVal > 0 ? distVal : '';
+                    }
+                    node.appendChild(distLabel);
+                }
+                container.appendChild(node);
+            });
+        }
+
+        async function startAlgorithm() {
+            if (document.getElementById('graph-type-select').value === 'osm') return;
+            isPaused = false;
+            const btnPause = document.getElementById('btn-pause');
+            btnPause.style.display = 'block'; btnPause.innerHTML = '⏸ Tạm dừng'; btnPause.style.backgroundColor = '#f39c12';
+            currentRunId++; const runId = currentRunId;
+
+            const category = document.getElementById('category-select').value;
+            const graphType = document.getElementById('graph-type-select').value;
+            const algoVal = document.getElementById('algo-select').value;
+            const inputVal = category === 'sorting' ? document.getElementById('array-input').value : '';
+
+            if (category === 'graph') { drawGraphInitial(currentEdges); }
+
+            const response = await fetch('/api/run', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category: category, graph_type: graphType, algorithm: algoVal, array: inputVal, target: -1 })
+            });
+            const states = await response.json();
+
+            for (let i = 0; i < states.length; i++) {
+                if (runId !== currentRunId) break;
+                while (isPaused) {
+                    if (runId !== currentRunId) break;
+                    await sleep(50);
+                }
+                if (runId !== currentRunId) break;
+
+                if (states[i].msg) document.getElementById('log-container').innerText = states[i].msg;
+                if (states[i].type === 'sorting') drawArray(states[i]);
+                else if (states[i].type === 'graph') drawGraphState(states[i]);
+
+                await sleep(document.getElementById('speed-slider').value);
+            }
+            if (runId === currentRunId) btnPause.style.display = 'none';
+        }
+
+        // --- CÁC HÀM XỬ LÝ BẢN ĐỒ LEAFLET & TÌM KIẾM ---
+        let osmMap = null; let startMarker = null; let endMarker = null; let routePolyline = null;
+
+        // Tọa độ cứng để dự phòng cho một số điểm nội bộ PTIT
+        const ptitDict = {
+            "cổng chính ptit": { lat: 20.980590, lng: 105.787401 },
+            "tòa nhà a1 ptit": { lat: 20.980315, lng: 105.788111 },
+            "tòa nhà a2 ptit": { lat: 20.980183, lng: 105.788540 },
+            "tòa nhà a3 ptit": { lat: 20.980000, lng: 105.789000 },
+            "sân bóng ptit": { lat: 20.981242, lng: 105.788514 },
+            "ký túc xá ptit": { lat: 20.981881, lng: 105.788523 },
+            "thư viện ptit": { lat: 20.981273, lng: 105.787680 },
+            "căn tin ptit": { lat: 20.980000, lng: 105.788200 },
+            "phố ao sen": { lat: 20.981300, lng: 105.789100 },
+            "ngõ 92 trần phú": { lat: 20.982000, lng: 105.789500 },
+            "công viên mỗ lao": { lat: 20.982800, lng: 105.785000 },
+            "ga văn quán": { lat: 20.979600, lng: 105.789900 }
+        };
+
+        function initOsmMap() {
+            if (!osmMap) {
+                osmMap = L.map('osm-map-container').setView([20.980816, 105.787358], 16);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors' }).addTo(osmMap);
+                osmMap.on('click', function (e) {
+                    stopSimulation();
+                    if (!startMarker) {
+                        startMarker = L.marker(e.latlng).addTo(osmMap).bindPopup("Xuất phát").openPopup();
+                        document.getElementById('osm-start').value = e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5);
+                        document.getElementById('log-container').innerText = "Đã ghim điểm đi. Vui lòng ghim thêm điểm đến...";
+                    } else if (!endMarker) {
+                        endMarker = L.marker(e.latlng).addTo(osmMap).bindPopup("Đích đến").openPopup();
+                        document.getElementById('osm-end').value = e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5);
+                        document.getElementById('log-container').innerText = "Đang tính toán tuyến đường...";
+                        findOsmRoute(startMarker.getLatLng(), endMarker.getLatLng());
+                    } else {
+                        osmMap.removeLayer(startMarker); osmMap.removeLayer(endMarker);
+                        if (routePolyline) osmMap.removeLayer(routePolyline);
+                        startMarker = L.marker(e.latlng).addTo(osmMap).bindPopup("Xuất phát").openPopup();
+                        endMarker = null; routePolyline = null;
+                        document.getElementById('osm-start').value = e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5);
+                        document.getElementById('osm-end').value = "";
+                        document.getElementById('log-container').innerText = "Đã ghim điểm đi. Vui lòng ghim thêm điểm đến...";
+                    }
+                });
+            }
+        }
+
+        // Cập nhật hàm theo "Cách 2" (Bỏ đoạn cộng đuôi "Hà Đông, Hà Nội")
+        async function getCoordinates(query) {
+            query = query.trim().toLowerCase();
+            if (ptitDict[query]) return ptitDict[query];
+            try {
+                let res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`);
+                let data = await res.json();
+                if (data.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+            } catch (e) { console.error("Lỗi Geocoding:", e); }
+            return null;
+        }
+
+        async function searchOsmRoute() {
+            stopSimulation();
+            const startText = document.getElementById('osm-start').value;
+            const endText = document.getElementById('osm-end').value;
+            if (!startText || !endText) {
+                document.getElementById('log-container').innerText = "❌ Vui lòng nhập hoặc ghim cả 2 điểm!"; return;
+            }
+            document.getElementById('log-container').innerText = "⏳ Đang phân tích địa chỉ...";
+            let startCoords = startText.includes(',') ? { lat: parseFloat(startText.split(',')[0]), lng: parseFloat(startText.split(',')[1]) } : await getCoordinates(startText);
+            let endCoords = endText.includes(',') ? { lat: parseFloat(endText.split(',')[0]), lng: parseFloat(endText.split(',')[1]) } : await getCoordinates(endText);
+
+            if (!startCoords) { document.getElementById('log-container').innerText = `❌ Không tìm thấy tọa độ cho: ${startText}`; return; }
+            if (!endCoords) { document.getElementById('log-container').innerText = `❌ Không tìm thấy tọa độ cho: ${endText}`; return; }
+
+            if (startMarker) osmMap.removeLayer(startMarker);
+            if (endMarker) osmMap.removeLayer(endMarker);
+            if (routePolyline) osmMap.removeLayer(routePolyline);
+
+            startMarker = L.marker([startCoords.lat, startCoords.lng]).addTo(osmMap).bindPopup("Đi: " + startText).openPopup();
+            endMarker = L.marker([endCoords.lat, endCoords.lng]).addTo(osmMap).bindPopup("Đến: " + endText).openPopup();
+            findOsmRoute(startMarker.getLatLng(), endMarker.getLatLng());
+        }
+
+        async function findOsmRoute(start, end) {
+            try {
+                currentRunId++;
+                const runId = currentRunId;
+
+                document.getElementById('log-container').innerHTML = "⏳ <b>Dijkstra:</b> Đang chuyển đổi bản đồ thành đồ thị G(V, E) và khởi tạo mảng khoảng cách...";
+                const response = await fetch('/api/route_osm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ start: [start.lat, start.lng], end: [end.lat, end.lng] })
+                });
+                const data = await response.json();
+
+                if (data.error) { document.getElementById('log-container').innerText = "❌ " + data.error; return; }
+                if (runId !== currentRunId) return;
+
+                document.getElementById('log-container').innerHTML = "⏳ <b>Dijkstra:</b> Đang nới lỏng (Relaxation) các cạnh dựa trên trọng số độ dài đường phố...";
+                routePolyline = L.polyline([], { color: '#e74c3c', weight: 6, dashArray: '10, 10' }).addTo(osmMap);
+                osmMap.fitBounds(L.polyline(data.path).getBounds(), { padding: [40, 40] });
+
+                let currentStep = 0;
+                const speed = document.getElementById('speed-slider').value;
+                const drawSpeed = speed < 100 ? 20 : 100;
+
+                const drawInterval = setInterval(() => {
+                    if (runId !== currentRunId) {
+                        clearInterval(drawInterval);
+                        return;
+                    }
+                    if (currentStep >= data.path.length) {
+                        clearInterval(drawInterval);
+                        document.getElementById('log-container').innerHTML = `✅ <b>Dijkstra hoàn tất!</b> Lộ trình tối ưu đi qua <b style="color:#f1c40f">${data.nodes_count} đỉnh</b>, tổng chiều dài: <b style="color:#f1c40f">${data.distance} mét</b>.`;
+                    } else {
+                        routePolyline.addLatLng(data.path[currentStep]);
+                        if (currentStep % 3 === 0 && currentStep < data.path.length - 1) {
+                            document.getElementById('log-container').innerHTML = `⏳ <b>Dijkstra:</b> Đang truy vết đường đi qua đỉnh thứ ${currentStep + 1}...`;
+                        }
+                        currentStep++;
+                    }
+                }, drawSpeed);
+            } catch (error) {
+                document.getElementById('log-container').innerText = "❌ Lỗi kết nối tới Server.";
+            }
+        }
+    </script>
+</body>
+
+</html>

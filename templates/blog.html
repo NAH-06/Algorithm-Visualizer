@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Viện Lý Thuyết - Algorithm Visualizer</title>
+    <style>
+        /* BIẾN MÀU CHO CHẾ ĐỘ SÁNG TỐI */
+        :root {
+            --bg-body: #f5f7fa;
+            --bg-sidebar: #2c3e50;
+            --bg-panel: #ffffff;
+            --text-main: #34495e;
+            --text-heading: #2c3e50;
+            --border-color: #bdc3c7;
+            --bg-table-head: #ecf0f1;
+            --bg-code: #f8f9fa;
+            --text-code: #e83e8c;
+            --divider-bg: #ecf0f1;
+            --divider-hover: #dcdde1;
+            --heading-blue: #2980b9;
+        }
+
+        body.dark-mode {
+            --bg-body: #1a1a2e;
+            --bg-sidebar: #0f3460;
+            --bg-panel: #16213e;
+            --text-main: #dcdde1;
+            --text-heading: #ecf0f1;
+            --border-color: #535c68;
+            --bg-table-head: #1b262c;
+            --bg-code: #0f3460;
+            --text-code: #ff79c6;
+            --divider-bg: #2c3e50;
+            --divider-hover: #34495e;
+            --heading-blue: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            overflow: hidden;
+            transition: 0.3s;
+        }
+
+        /* NÚT CHUYỂN CHẾ ĐỘ SÁNG TỐI */
+        #theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background-color: transparent;
+            color: var(--text-heading);
+            border: 2px solid var(--text-heading);
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            z-index: 1000;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        #theme-toggle:hover {
+            background-color: var(--text-heading);
+            color: var(--bg-panel);
+        }
+
+        /* Menu bên trái */
+        .sidebar {
+            width: 300px;
+            background-color: var(--bg-sidebar);
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            transition: margin-left 0.3s ease, background-color 0.3s ease;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .sidebar.hidden {
+            margin-left: -340px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 15px;
+            margin-top: 0;
+            font-size: 22px;
+        }
+
+        /* CSS CHUYÊN MỤC */
+        .category-header {
+            background-color: #1abc9c;
+            color: white;
+            padding: 12px 15px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.2s;
+        }
+
+        .category-header:hover {
+            background-color: #16a085;
+        }
+
+        .category-arrow {
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+
+        .algo-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 10px 0;
+        }
+
+        .algo-list li {
+            padding: 12px 15px 12px 35px;
+            margin-bottom: 5px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14.5px;
+        }
+
+        .algo-list li:hover,
+        .algo-list li.active {
+            background-color: #3498db;
+            transform: translateX(5px);
+            font-weight: bold;
+        }
+
+        /* THANH NGĂN CÁCH MŨI TÊN */
+        .toggle-divider {
+            width: 18px;
+            background-color: var(--divider-bg);
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.3s;
+            z-index: 10;
+        }
+
+        .toggle-divider:hover {
+            background-color: var(--divider-hover);
+        }
+
+        #toggle-icon {
+            font-size: 12px;
+            color: #7f8c8d;
+            font-weight: bold;
+            user-select: none;
+        }
+
+        /* Nội dung bên phải */
+        .content {
+            flex: 1;
+            padding: 40px 60px;
+            overflow-y: auto;
+            background-color: var(--bg-panel);
+            transition: all 0.3s ease;
+        }
+
+        .top-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            background-color: #e74c3c;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+            box-shadow: 0 4px 6px rgba(231, 76, 60, 0.3);
+        }
+
+        .back-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        /* Trình bày bài viết */
+        .article-title {
+            color: var(--text-heading);
+            font-size: 36px;
+            margin-top: 0;
+            margin-bottom: 15px;
+            transition: 0.3s;
+        }
+
+        .article-body {
+            font-size: 17px;
+            line-height: 1.8;
+            color: var(--text-main);
+            transition: 0.3s;
+        }
+
+        .article-body h4 {
+            color: var(--heading-blue);
+            margin-top: 25px;
+            font-size: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 5px;
+            transition: 0.3s;
+        }
+
+        .code-block {
+            background-color: var(--bg-code);
+            border: 1px solid var(--border-color);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--text-code);
+            transition: 0.3s;
+        }
+
+        ul {
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* CSS CHO BẢNG MÔ PHỎNG LƯỢT CHẠY */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 15.5px;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            text-align: center;
+            transition: 0.3s;
+        }
+
+        th {
+            background-color: var(--bg-table-head);
+            color: var(--text-heading);
+            font-weight: bold;
+        }
+
+        /* CSS hình ảnh */
+        .img-fluid {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+
+    <!-- Thêm MathJax để hiển thị công thức toán học LaTeX -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['[', ']']]
+            }
+        };
+    </script>
+</head>
+
+<body>
+
+    <button id="theme-toggle" onclick="toggleTheme()">🌙 Chế độ tối</button>
+
+    <div class="sidebar" id="sidebar">
+        <h2>📚 Thư Viện Thuật Toán</h2>
+
+        <div class="category-header" onclick="toggleCategory('sort-menu')">
+            <span>📊 Thuật Toán Sắp Xếp</span>
+            <span class="category-arrow" id="arrow-sort-menu">▼</span>
+        </div>
+        <ul class="algo-list" id="sort-menu" style="display: none;">
+            <li onclick="loadArticle('insertion')" id="btn-insertion">Sắp xếp chèn (Insertion Sort)</li>
+            <li onclick="loadArticle('bubble')" id="btn-bubble">Sắp xếp nổi bọt (Bubble Sort)</li>
+            <li onclick="loadArticle('selection')" id="btn-selection">Sắp xếp chọn (Selection Sort)</li>
+            <li onclick="loadArticle('quick')" id="btn-quick">Sắp xếp nhanh (Quick Sort)</li>
+            <li onclick="loadArticle('merge')" id="btn-merge">Sắp xếp trộn (Merge Sort)</li>
+            <li onclick="loadArticle('radix')" id="btn-radix">Radix Sort (Theo cơ số)</li>
+        </ul>
+
+        <div class="category-header" onclick="toggleCategory('graph-menu')">
+            <span>🌐 Thuật Toán Đồ Thị</span>
+            <span class="category-arrow" id="arrow-graph-menu">▼</span>
+        </div>
+        <ul class="algo-list" id="graph-menu">
+            <li onclick="loadArticle('dijkstra')" id="btn-dijkstra">Dijkstra - Đường đi ngắn nhất</li>
+            <li onclick="loadArticle('bellman')" id="btn-bellman">Bellman-Ford</li>
+            <li onclick="loadArticle('bfs')" id="btn-bfs">Duyệt rộng (BFS)</li>
+            <li onclick="loadArticle('dfs')" id="btn-dfs">Duyệt sâu (DFS)</li>
+            <li onclick="loadArticle('prim')" class="active" id="btn-prim">Cây khung Prim</li>
+            <li onclick="loadArticle('kruskal')" id="btn-kruskal">Cây khung Kruskal</li>
+        </ul>
+    </div>
+
+    <div class="toggle-divider" onclick="toggleSidebar()" title="Đóng/Mở Menu">
+        <span id="toggle-icon">◀</span>
+    </div>
+
+    <div class="content">
+        <div class="top-bar">
+            <a href="/" class="back-btn">⬅ Quay lại Trực quan hóa</a>
+        </div>
+        <div id="article-container"></div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const themeBtn = document.getElementById('theme-toggle');
+            themeBtn.innerHTML = document.body.classList.contains('dark-mode') ? '☀️ Chế độ sáng' : '🌙 Chế độ tối';
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('hidden');
+            icon.innerText = sidebar.classList.contains('hidden') ? '▶' : '◀';
+        }
+
+        function toggleCategory(menuId) {
+            const menu = document.getElementById(menuId);
+            const arrow = document.getElementById('arrow-' + menuId);
+            if (menu.style.display === 'none') {
+                menu.style.display = 'block'; arrow.innerText = '▼';
+            } else {
+                menu.style.display = 'none'; arrow.innerText = '▶';
+            }
+        }
+
+        const articles = {
+            'insertion': {
+                title: 'Insertion Sort',
+                body: `
+                    <p>Thuật toán sắp xếp chèn là một thuật toán sắp xếp đơn giản hoạt động bằng cách chèn từng phần tử của một danh sách chưa được sắp xếp vào vị trí chính xác của nó trong một phần đã được sắp xếp của danh sách đó.</p>
+                    
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li>Bắt đầu với phần tử thứ hai vì phần tử đầu tiên được giả định là đã được sắp xếp.</li>
+                        <li>So sánh phần tử thứ hai với phần tử thứ nhất; nếu phần tử thứ hai nhỏ hơn thì hoán đổi vị trí của chúng.</li>
+                        <li>Di chuyển đến phần tử thứ ba, so sánh nó với hai phần tử đầu tiên và đặt nó vào đúng vị trí.</li>
+                        <li>Lặp lại cho đến khi toàn bộ mảng được sắp xếp.</li>
+                    </ul>
+                    <p>Nó giống như việc sắp xếp các quân bài trong tay bạn. Bạn chia các quân bài thành hai nhóm: nhóm bài đã được sắp xếp và nhóm bài chưa được sắp xếp. Sau đó, bạn chọn một quân bài từ nhóm bài chưa được sắp xếp và đặt nó vào đúng vị trí trong nhóm bài đã được sắp xếp.</p>
+                    
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Trường hợp tốt nhất: $O(n)$, nếu danh sách đã được sắp xếp, trong đó n là số phần tử trong danh sách.</li>
+                        <li>Trường hợp trung bình: $O(n^2)$, nếu danh sách được sắp xếp ngẫu nhiên.</li>
+                        <li>Trường hợp xấu nhất: $O(n^2)$, nếu danh sách được sắp xếp ngược lại.</li>
+                    </ul>
+                    <p><strong>Độ phức tạp không gian</strong></p>
+                    <ul>
+                        <li>Không gian phụ trợ: $O(1)$, Thuật toán sắp xếp chèn yêu cầu không gian bổ sung $O(1)$, khiến nó trở thành một thuật toán sắp xếp tiết kiệm không gian.</li>
+                    </ul>
+                    
+                    <h4>3. Ví dụ minh họa</h4>
+                    <ul>
+                        <li>Mảng ban đầu: <code class="code-block">[23, 1, 10, 5, 2]</code></li>
+                        <li>Khởi tạo: Coi <code>[23]</code> đã có thứ tự.</li>
+                        <li>Bước 1 (chèn 1): $1 < 23$ Chèn 1 trước $23 \\rightarrow [1, 23 | 10, 5, 2]$</li>
+                        <li>Bước 2 (chèn 10): $1 < 10 < 23$ Chèn 10 vào giữa 1 và $23 \\rightarrow [1, 10, 23 | 5, 2]$</li>
+                        <li>Bước 3 (chèn 5): $1 < 5 < 10$ Chèn 5 vào giữa 1 và $10 \\rightarrow [1, 5, 10, 23 | 2]$</li>
+                        <li>Bước 4 (chèn 2): $1 < 2 < 5$ Chèn 2 vào giữa 1 và $5 \\rightarrow [1, 2, 5, 10, 23]$</li>
+                        <li>$\\rightarrow$ Kết quả: <code>[1, 2, 5, 10, 23]</code></li>
+                    </ul>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>In-place: Tốn $O(1)$ bộ nhớ phụ.</li>
+                                <li>Stable: Giữ nguyên thứ tự các phần tử bằng nhau.</li>
+                                <li>Thích ứng (Adaptive): Mảng gần như đã sắp xếp chạy cực nhanh ($O(n)$).</li>
+                                <li>Cực kỳ tối ưu cho tập dữ liệu nhỏ ($n \\le 20-50$, thực tế std::sort trong C++ hay Timsort của Python đều gọi Insertion Sort cho mảng con nhỏ).</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Không phù hợp với dữ liệu lớn: $O(n^2)$ cho trường hợp trung bình và xấu nhất (chậm hơn nhiều so với QuickSort / MergeSort $O(n \\log n)$).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                `
+            },
+            'selection': {
+                title: 'Selection Sort',
+                body: `
+                    <p>Thuật toán sắp xếp chọn (Selection Sort) là một thuật toán sắp xếp đơn giản, hoạt động dựa trên việc chia mảng thành hai phần: phần đã sắp xếp ở đầu mảng và phần chưa sắp xếp ở cuối mảng.</p>
+                    
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li>Bắt đầu từ phần tử đầu tiên và tìm phần tử nhỏ nhất trong toàn bộ mảng bằng cách lặp qua nó.</li>
+                        <li>Hãy đổi chỗ phần tử nhỏ nhất này với phần tử đầu tiên.</li>
+                        <li>Bây giờ, chuyển sang phần tử thứ hai, tìm phần tử nhỏ nhất tiếp theo trong phần chưa được sắp xếp còn lại và hoán đổi nó với vị trí thứ hai.</li>
+                        <li>Lặp lại quá trình này cho đến khi toàn bộ mảng được sắp xếp.</li>
+                    </ul>
+                    <p><strong>Ý tưởng cốt lõi:</strong> Chọn phần tử nhỏ nhất trong đoạn chưa sắp xếp, đổi chỗ về đầu đoạn.</p>
+                    
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Trường hợp tốt nhất: $O(n^2)$.</li>
+                        <li>Trường hợp trung bình: $O(n^2)$.</li>
+                        <li>Trường hợp xấu nhất: $O(n^2)$.</li>
+                        <li>Luôn tốn thời gian $O(n^2)$ vì bất kể mảng đầu vào như thế nào, thuật toán vẫn phải quét qua toàn bộ mảng chưa được sắp xếp để tìm phần tử nhỏ nhất.</li>
+                    </ul>
+                    <p><strong>Độ phức tạp không gian</strong></p>
+                    <ul>
+                        <li>Không gian phụ trợ: $O(1)$ (In-place), thuật toán không yêu cầu cấp phát thêm mảng phụ để sắp xếp.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Mảng ban đầu: <code class="code-block">arr = [64, 25, 12, 22, 11]</code></p>
+                    <table>
+                        <tr>
+                            <th>Lượt</th>
+                            <th>Vùng xét</th>
+                            <th>Min tìm được</th>
+                            <th>Đổi chỗ</th>
+                            <th>Mảng sau lượt</th>
+                        </tr>
+                        <tr>
+                            <td>0</td>
+                            <td>[64, 25, 12, 22, 11]</td>
+                            <td>11</td>
+                            <td>$64 \\leftrightarrow 11$</td>
+                            <td>[11 | 25, 12, 22, 64]</td>
+                        </tr>
+                        <tr>
+                            <td>1</td>
+                            <td>[25, 12, 22, 64]</td>
+                            <td>12</td>
+                            <td>$25 \\leftrightarrow 12$</td>
+                            <td>[11, 12 | 25, 22, 64]</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>[25, 22, 64]</td>
+                            <td>22</td>
+                            <td>$25 \\leftrightarrow 22$</td>
+                            <td>[11, 12, 22 | 25, 64]</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>[25, 64]</td>
+                            <td>25</td>
+                            <td>Giữ nguyên</td>
+                            <td>[11, 12, 22, 25 | 64]</td>
+                        </tr>
+                    </table>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>In-place: Tốn bộ nhớ $O(1)$.</li>
+                                <li>Số lượng phép hoán đổi ít: Tối đa chỉ thực hiện $n-1$ lần hoán đổi, điều này có lợi nếu chi phí ghi vào bộ nhớ là lớn.</li>
+                                <li>Cài đặt đơn giản.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Độ phức tạp thời gian luôn là $O(n^2)$, làm cho nó rất chậm đối với các mảng có kích thước lớn.</li>
+                                <li>Unstable: Không ổn định, có thể làm thay đổi thứ tự ban đầu của các phần tử có cùng giá trị.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                `
+            },
+            'bubble': {
+                title: 'Bubble Sort',
+                body: `
+                    <p>Thuật toán sắp xếp nổi bọt (Bubble Sort) là một thuật toán sắp xếp đơn giản, hoạt động bằng cách liên tục so sánh hai phần tử kề nhau và hoán đổi vị trí nếu chúng sai thứ tự. Sau mỗi vòng lặp, phần tử lớn nhất (hoặc nhỏ nhất) sẽ “nổi” dần về cuối (hoặc đầu) dãy, giống như bọt nước nổi lên mặt, từ đó hình thành tên gọi của thuật toán.</p>
+                    
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li>So sánh từng cặp phần tử liền kề.</li>
+                        <li>Nếu phần tử đầu tiên lớn hơn phần tử thứ hai, hãy hoán đổi vị trí của chúng.</li>
+                        <li>Sau mỗi lượt xử lý đầy đủ, phần tử lớn nhất chưa được sắp xếp sẽ "nổi lên" vị trí chính xác của nó ở cuối.</li>
+                        <li>Lặp lại quy trình này cho phần danh sách chưa được sắp xếp còn lại.</li>
+                        <li>Thuật toán sẽ dừng sớm nếu không có thao tác hoán đổi nào xảy ra trong một lượt, nghĩa là mảng đã được sắp xếp.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Trong trường hợp trung bình và xấu nhất, Bubble Sort có độ phức tạp $O(n^2)$, khiến thuật toán chạy chậm khi số lượng phần tử lớn.</li>
+                        <li>Nếu trong một vòng lặp không xảy ra hoán đổi nào, có thể kết luận dãy đã được sắp xếp và dừng thuật toán sớm, giúp giảm thời gian chạy trong một số trường hợp.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Xét mảng số nguyên: <code class="code-block">arr = [5, 1, 4, 2, 8] (n = 5)</code></p>
+                    
+                    <p><strong>Lượt 1 (Pass 1): Đưa số lớn nhất về cuối</strong></p>
+                    <ul>
+                        <li>So sánh (5, 1): $5 > 1 \\rightarrow$ Đổi chỗ $\\rightarrow [1, 5, 4, 2, 8]$</li>
+                        <li>So sánh (5, 4): $5 > 4 \\rightarrow$ Đổi chỗ $\\rightarrow [1, 4, 5, 2, 8]$</li>
+                        <li>So sánh (5, 2): $5 > 2 \\rightarrow$ Đổi chỗ $\\rightarrow [1, 4, 2, 5, 8]$</li>
+                        <li>So sánh (5, 8): $5 < 8 \\rightarrow$ Giữ nguyên $\\rightarrow [1, 4, 2, 5, 8]$</li>
+                    </ul>
+                    <p>Kết thúc lượt 1: Số 8 đã nằm đúng vị trí cuối cùng</p>
+
+                    <p><strong>Lượt 2 (Pass 2): Đưa số lớn nhì về áp chót</strong></p>
+                    <ul>
+                        <li>So sánh (1, 4): $1 < 4 \\rightarrow$ Giữ nguyên $\\rightarrow [1, 4, 2, 5 | 8]$</li>
+                        <li>So sánh (4, 2): $4 > 2 \\rightarrow$ Đổi chỗ $\\rightarrow [1, 2, 4, 5, 8]$</li>
+                        <li>So sánh (4, 5): $4 < 5 \\rightarrow$ Giữ nguyên $\\rightarrow [1, 2, 4 | 5, 8]$</li>
+                    </ul>
+                    <p>Kết thúc lượt 2: Số 5 đã chốt vị trí</p>
+
+                    <p><strong>Lượt 3 (Pass 3): Kiểm tra các số còn lại</strong></p>
+                    <ul>
+                        <li>So sánh (1, 2): $1 < 2 \\rightarrow$ Giữ nguyên</li>
+                        <li>So sánh (2, 4): $2 < 4 \\rightarrow$ Giữ nguyên</li>
+                    </ul>
+                    <p>Không có bất kỳ phép hoán đổi nào diễn ra $\\rightarrow$ Mảng đã được sắp xếp hoàn tất! Thuật toán kích hoạt cờ dừng sớm (Early Exit).</p>
+                    <p><strong>Kết quả cuối cùng:</strong> <code class="code-block">[1, 2, 4, 5, 8]</code></p>
+
+                    <p><strong>Bảng Trace thu gọn (Trace Table)</strong></p>
+                    <table>
+                        <tr>
+                            <th>Lượt duyệt</th>
+                            <th>Các cặp xét và hoán đổi</th>
+                            <th>Phần tử chốt vị trí</th>
+                            <th>Trạng thái mảng sau lượt</th>
+                        </tr>
+                        <tr>
+                            <td>Lượt 1</td>
+                            <td>(5,1)&rarr;[1,5]; (5,4)&rarr;[4,5]; (5,2)&rarr;[2,5]; (5,8)</td>
+                            <td>8 (cuối mảng)</td>
+                            <td>[1, 4, 2, 5 | 8]</td>
+                        </tr>
+                        <tr>
+                            <td>Lượt 2</td>
+                            <td>(1, 4); (4,2)&rarr;[2,4]; (4,5)</td>
+                            <td>5 (áp chót)</td>
+                            <td>[1, 2, 4 | 5, 8]</td>
+                        </tr>
+                        <tr>
+                            <td>Lượt 3</td>
+                            <td>(1, 2); (2,4) (không có swap)</td>
+                            <td>Dừng sớm</td>
+                            <td>[1, 2, 4, 5, 8]</td>
+                        </tr>
+                    </table>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm của Bubble Sort:</strong>
+                            <ul>
+                                <li>Dễ hiểu và trực quan: Bubble Sort hoạt động dựa trên nguyên lý so sánh hai phần tử kề nhau và hoán đổi nếu sai thứ tự, giúp học sinh dễ hình dung quá trình sắp xếp.</li>
+                                <li>Dễ cài đặt: Thuật toán có cấu trúc đơn giản, không yêu cầu kiến thức phức tạp, rất phù hợp cho người mới bắt đầu học lập trình.</li>
+                                <li>Rèn luyện tư duy thuật toán cơ bản: Bubble Sort giúp học sinh làm quen với vòng lặp, điều kiện, thao tác hoán đổi – những kỹ năng quan trọng trong lập trình thi đấu.</li>
+                                <li>Có thể tối ưu dừng sớm: Nếu trong một vòng lặp không xảy ra hoán đổi nào, có thể kết luận dãy đã được sắp xếp và dừng thuật toán sớm, giúp giảm thời gian chạy trong một số trường hợp.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm của Bubble Sort:</strong>
+                            <ul>
+                                <li>Độ phức tạp cao: Trong trường hợp trung bình và xấu nhất, Bubble Sort có độ phức tạp $O(n^2)$, khiến thuật toán chạy chậm khi số lượng phần tử lớn.</li>
+                                <li>Hiệu suất kém: So với các thuật toán sắp xếp khác như Insertion Sort hay Quick Sort, Bubble Sort không hiệu quả cho các bài toán thực tế.</li>
+                                <li>Ít được sử dụng trong lập trình chuyên nghiệp: Bubble Sort chủ yếu dùng để học và minh họa nguyên lý, hầu như không được áp dụng trong các hệ thống lớn hoặc bài toán yêu cầu tối ưu cao.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                `
+            },
+            'quick': {
+                title: 'Quick Sort',
+                body: `
+                    <p>QuickSort là một thuật toán sắp xếp dựa trên phương pháp chia để trị, chọn một phần tử làm chốt (pivot) và phân vùng mảng đã cho xung quanh chốt đã chọn bằng cách đặt chốt vào đúng vị trí của nó trong mảng đã được sắp xếp.</p>
+                    
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Thuật toán này chủ yếu gồm các bước sau:</p>
+                    <ul>
+                        <li><strong>Chọn điểm xoay (Pivot):</strong> Chọn một phần tử (đầu tiên, cuối cùng, ngẫu nhiên hoặc trung vị) làm điểm xoay.</li>
+                        <li><strong>Phân vùng mảng (Partition):</strong> Sắp xếp lại các phần tử sao cho những phần tử nhỏ hơn chốt được đặt bên trái và những phần tử lớn hơn được đặt bên phải. Sau đó, phần tử chốt di chuyển đến vị trí đã được sắp xếp đúng.</li>
+                        <li><strong>Sắp xếp đệ quy:</strong> Áp dụng quy trình tương tự một cách đệ quy cho mảng con bên trái và bên phải cho đến khi tất cả các phần tử được sắp xếp.</li>
+                        <li><strong>Trường hợp cơ bản:</strong> Khi một mảng con chỉ có một hoặc không có phần tử nào, nó đã được sắp xếp.</li>
+                    </ul>
+                    <p>Trong thực tế triển khai, việc phân vùng đảm bảo tất cả các phần tử nhỏ hơn nằm ở một phía và các phần tử lớn hơn nằm ở phía còn lại, giúp chia nhỏ bài toán và sắp xếp vô cùng hiệu quả.</p>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Trường hợp tốt nhất: $O(n \\log n)$ - Xảy ra khi pivot luôn chia mảng thành 2 nửa đều nhau.</li>
+                        <li>Trường hợp trung bình: $O(n \\log n)$ - Áp dụng cho đa số các phân bố dữ liệu ngẫu nhiên.</li>
+                        <li>Trường hợp xấu nhất: $O(n^2)$ - Khi mảng đã được sắp xếp sẵn và luôn chọn pivot ở đầu hoặc cuối mảng.</li>
+                    </ul>
+                    <p><strong>Độ phức tạp không gian</strong></p>
+                    <ul>
+                        <li>Không gian phụ trợ: $O(\\log n)$ đối với cách cài đặt in-place (do bộ nhớ sử dụng cho Call Stack của đệ quy) hoặc $O(n)$ nếu dùng mảng phụ (list comprehension).</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Cho mảng ban đầu: <code class="code-block">[8, 3, 1, 7, 0]</code></p>
+                    <ul>
+                        <li><strong>Chọn pivot:</strong> Chọn phần tử 1 làm pivot.</li>
+                        <li><strong>Phân vùng (Partition):</strong>
+                            <ul>
+                                <li>Phần tử nhỏ hơn pivot: <code>left = [0]</code></li>
+                                <li>Phần tử bằng pivot: <code>middle = [1]</code></li>
+                                <li>Phần tử lớn hơn pivot: <code>right = [8, 3, 7]</code></li>
+                            </ul>
+                        </li>
+                        <li><strong>Tiếp tục đệ quy:</strong> Xử lý phần <code>right = [8, 3, 7]</code> (chọn pivot = 3):
+                            <ul>
+                                <li>Phần tử nhỏ hơn 3: <code>left = []</code></li>
+                                <li>Phần tử bằng 3: <code>middle = [3]</code></li>
+                                <li>Phần tử lớn hơn 3: <code>right = [8, 7]</code> $\\rightarrow$ tiếp tục đệ quy chia ra <code>[7]</code> và <code>[8]</code>.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Ghép ngược lại:</strong> <code>[0] + [1] + [3, 7, 8] &rarr; [0, 1, 3, 7, 8]</code>.</li>
+                    </ul>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Tốc độ thực thi rất nhanh: Mặc dù cùng là $O(n \\log n)$ nhưng Quick Sort thường chạy nhanh hơn Merge Sort trong thực tế nhờ các vòng lặp bên trong rất ngắn và tận dụng tốt bộ nhớ đệm (Cache) của CPU.</li>
+                                <li>Tối ưu không gian (In-place): Thuật toán có thể cài đặt trực tiếp trên mảng gốc, không cần tạo mảng phụ (tiết kiệm hơn Merge Sort).</li>
+                                <li>Phù hợp với dữ liệu lớn: Được ứng dụng làm thuật toán sắp xếp mặc định trong rất nhiều ngôn ngữ lập trình (như hàm <code>qsort</code> trong C).</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Thuật toán không ổn định (Unstable): Quá trình phân vùng (Partition) có thể làm đảo lộn vị trí ban đầu của các phần tử có giá trị bằng nhau.</li>
+                                <li>Dễ rơi vào trường hợp xấu nhất ($O(n^2)$) nếu dữ liệu đầu vào đã có thứ tự mà chiến lược chọn pivot không tốt (ví dụ luôn chọn phần tử cuối).</li>
+                            </ul>
+                        </li>
+                    </ul>
+                `
+            },
+            'merge': {
+                title: 'Merge Sort',
+                body: `
+                    <p>Thuật toán sắp xếp trộn (Merge sort) là một thuật toán sắp xếp phổ biến, nổi tiếng về hiệu quả và tính ổn định. Nó tuân theo phương pháp chia để trị (Divide and Conquer). Thuật toán hoạt động bằng cách chia mảng đầu vào thành hai nửa một cách đệ quy, sắp xếp hai nửa đó một cách đệ quy và cuối cùng trộn chúng lại với nhau để thu được mảng đã được sắp xếp.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li><strong>Chia (Divide):</strong> Chia danh sách hoặc mảng một cách đệ quy thành hai nửa cho đến khi không thể chia nhỏ hơn nữa.</li>
+                        <li><strong>Trị (Conquer):</strong> Mỗi mảng con được sắp xếp riêng lẻ bằng thuật toán sắp xếp trộn (merge sort).</li>
+                        <li><strong>Hợp nhất (Merge):</strong> Các mảng con đã được sắp xếp sẽ được hợp nhất lại với nhau theo đúng thứ tự đã sắp xếp. Quá trình này tiếp tục cho đến khi tất cả các phần tử từ cả hai mảng con đã được hợp nhất.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Trường hợp tốt nhất: $O(n \\log n)$, khi mảng đã được sắp xếp hoặc gần như đã được sắp xếp.</li>
+                        <li>Trường hợp trung bình: $O(n \\log n)$, khi mảng được sắp xếp ngẫu nhiên.</li>
+                        <li>Trường hợp xấu nhất: $O(n \\log n)$, khi mảng được sắp xếp theo thứ tự ngược lại.</li>
+                    </ul>
+                    <p><strong>Độ phức tạp không gian</strong></p>
+                    <ul>
+                        <li>Không gian phụ trợ: $O(n)$, cần thêm không gian cho mảng tạm thời được sử dụng trong quá trình hợp nhất.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Áp dụng chiến lược Chia để trị (Divide and Conquer) cho mảng ban đầu: <code class="code-block">[70, 30, 50, 10]</code></p>
+                    <ul>
+                        <li><strong>Giai đoạn Chia (Divide):</strong>
+                            <ul>
+                                <li>Mảng ban đầu <code>[70, 30, 50, 10]</code> được chia đôi thành 2 mảng con: <code>[70, 30]</code> và <code>[50, 10]</code>.</li>
+                                <li>Tiếp tục chia đôi cho đến khi mỗi phần tử đứng độc lập: <code>[70]</code>, <code>[30]</code> và <code>[50]</code>, <code>[10]</code>.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Giai đoạn Trị & Gộp (Conquer & Merge):</strong>
+                            <ul>
+                                <li>So sánh và gộp từng cặp nhỏ theo thứ tự tăng dần:</li>
+                                <li><code>[70]</code> và <code>[30]</code> &rarr; gộp thành <code>[30, 70]</code>.</li>
+                                <li><code>[50]</code> và <code>[10]</code> &rarr; gộp thành <code>[10, 50]</code>.</li>
+                                <li>Gộp hai mảng đã sắp xếp <code>[30, 70]</code> và <code>[10, 50]</code> lại với nhau &rarr; thu được mảng hoàn chỉnh: <code>[10, 30, 50, 70]</code>.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Tính ổn định: Thuật toán sắp xếp trộn là một thuật toán sắp xếp ổn định, duy trì thứ tự tương đối của các phần tử bằng nhau trong mảng đầu vào.</li>
+                                <li>Hiệu năng được đảm bảo: Có độ phức tạp thời gian trong trường hợp xấu nhất là $O(n \\log n)$, hoạt động tốt ngay cả trên các tập dữ liệu lớn.</li>
+                                <li>Dễ thực hiện: Phương pháp chia để trị rất đơn giản.</li>
+                                <li>Song song tự nhiên: Hợp nhất các mảng con một cách độc lập, rất phù hợp với xử lý song song.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Không phải sắp xếp tại chỗ (Not in-place): Yêu cầu thêm bộ nhớ để lưu trữ dữ liệu đã được sắp xếp, có thể là nhược điểm khi bộ nhớ hạn chế.</li>
+                                <li>Chậm hơn QuickSort: Thường chậm hơn QuickSort vì QuickSort thân thiện hơn với bộ nhớ cache do nó hoạt động tại chỗ (in-place).</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <ul>
+                        <li>Sắp xếp các tập dữ liệu lớn.</li>
+                        <li>Sắp xếp ngoài (External sorting) khi tập dữ liệu quá lớn không thể chứa hết trong bộ nhớ.</li>
+                        <li>Được sử dụng để giải các bài toán như <em>Inversion counting</em>, <em>Count Smaller on Right</em> & <em>Surpasser Count</em>.</li>
+                        <li>Thuật toán Merge Sort và các biến thể của nó (như TimSort) được sử dụng trong thư viện của Python, Java, Android và Swift để sắp xếp các kiểu dữ liệu không nguyên thủy vì tính ổn định. Ví dụ: <code>Collections.sort</code> trong Java sử dụng MergeSort.</li>
+                        <li>Được ưa chuộng để sắp xếp danh sách liên kết (Linked List).</li>
+                        <li>Dễ dàng thực hiện song song vì có thể sắp xếp các mảng con độc lập rồi hợp nhất.</li>
+                        <li>Hàm hợp nhất giúp giải quyết hiệu quả các bài toán như hợp và giao của hai mảng đã được sắp xếp.</li>
+                    </ul>
+                `
+            },
+            'radix': {
+                title: 'Radix Sort (Sắp xếp theo cơ số)',
+                body: `
+                    <p>Thuật toán sắp xếp Radix sắp xếp các số nguyên theo từng chữ số, từ chữ số có trọng số thấp nhất đến chữ số có trọng số cao nhất (LSD) hoặc ngược lại (MSD). Nó sử dụng một thuật toán sắp xếp ổn định (như Counting Sort) làm chương trình con cho mỗi vị trí chữ số.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Cách hoạt động của thuật toán sắp xếp Radix:</p>
+                    <ul>
+                        <li>Bước đầu tiên là tìm phần tử lớn nhất trong mảng (ví dụ: dùng hàm <code>max()</code> trong Python) và xác định số lượng chữ số của số lớn nhất đó.</li>
+                        <li>Tiếp theo, bắt đầu từ chữ số hàng đơn vị (LSD - Least Significant Digit), thuật toán sử dụng Counting Sort để sắp xếp mảng dựa trên giá trị của chữ số này.</li>
+                        <li>Sau đó, tiến hành sắp xếp tương tự cho chữ số hàng chục, hàng trăm... lặp lại quá trình này cho đến khi tất cả các chữ số (theo độ dài của số lớn nhất) đều được xử lý.</li>
+                    </ul>
+                    <p>Những điểm chính về thuật toán Radix Sort:</p>
+                    <ul>
+                        <li>Nó đưa ra những giả định về dữ liệu, chẳng hạn như dữ liệu phải nằm trong một phạm vi giá trị nhất định.</li>
+                        <li>Mảng đầu vào phải có các phần tử cùng cơ số và cùng chiều rộng.</li>
+                        <li>Thuật toán sắp xếp Radix hoạt động dựa trên việc sắp xếp theo vị trí của từng chữ số hoặc chữ cái riêng lẻ.</li>
+                        <li>Chúng ta phải bắt đầu sắp xếp từ vị trí ngoài cùng bên phải và sử dụng thuật toán ổn định ở mỗi vị trí.</li>
+                        <li>Thuật toán sắp xếp Radix không phải là thuật toán thực thi tại chỗ (not in-place) vì nó sử dụng một mảng đếm tạm thời.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Đạt được độ phức tạp $O(nk)$ trong đó $k$ là số chữ số lớn nhất của mảng.</li>
+                        <li>Thực tế, đối với các số nguyên có độ rộng cố định, thuật toán chạy với thời gian tuyến tính $O(n)$.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Để sắp xếp mảng: <code class="code-block">[170, 45, 75, 90, 802, 24, 2, 66]</code></p>
+                    <p>Thuật toán Radix Sort xử lý các chữ số từng vị trí một, bắt đầu từ chữ số có trọng số thấp nhất (LSD).</p>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Tìm số <code>802</code> là số lớn nhất (có 3 chữ số). Vậy thuật toán sẽ thực hiện 3 lần lặp (hàng đơn vị, hàng chục, hàng trăm).</li>
+                        <li><strong>Bước 2:</strong> Sắp xếp theo hàng đơn vị. Sử dụng thuật toán sắp xếp đếm ổn định, mảng trở thành: <br> &rarr; <code class="code-block">[170, 90, 802, 2, 24, 45, 75, 66]</code></li>
+                        <li><strong>Bước 3:</strong> Sắp xếp theo hàng chục. Sắp xếp lại theo chữ số hàng chục ta được: <br> &rarr; <code class="code-block">[802, 2, 24, 45, 66, 170, 75, 90]</code></li>
+                        <li><strong>Bước 4:</strong> Sắp xếp theo hàng trăm. Kết quả sắp xếp theo chữ số hàng trăm là: <br> &rarr; <code class="code-block">[2, 24, 45, 66, 75, 90, 170, 802]</code></li>
+                        <li><strong>Bước 5:</strong> Sau khi tất cả các chữ số được xử lý, mảng đã được sắp xếp hoàn toàn.</li>
+                    </ul>
+                    <p><strong>Kết quả cuối cùng:</strong> <code>[2, 24, 45, 66, 75, 90, 170, 802]</code></p>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Thuật toán sắp xếp Radix có độ phức tạp thời gian tuyến tính, điều này làm cho nó nhanh hơn các thuật toán sắp xếp dựa trên so sánh như Quick Sort và Merge Sort đối với các tập dữ liệu lớn.</li>
+                                <li>Đây là một thuật toán sắp xếp ổn định, có nghĩa là các phần tử có cùng giá trị khóa sẽ giữ nguyên thứ tự tương đối của chúng trong kết quả đã được sắp xếp.</li>
+                                <li>Rất hiệu quả để sắp xếp một lượng lớn số nguyên hoặc chuỗi ký tự.</li>
+                                <li>Có thể dễ dàng được xử lý song song.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Không hiệu quả để sắp xếp các số thập phân hoặc các loại dữ liệu không thể dễ dàng ánh xạ tới một số lượng chữ số nhỏ.</li>
+                                <li>Việc lưu trữ số lần xuất hiện của mỗi chữ số đòi hỏi một lượng bộ nhớ đáng kể (Not in-place).</li>
+                                <li>Không hiệu quả đối với các tập dữ liệu nhỏ hoặc các tập dữ liệu có ít khóa duy nhất.</li>
+                                <li>Yêu cầu dữ liệu cần được sắp xếp phải được biểu diễn bằng một số chữ số cố định, điều này có thể không đúng với một số loại dữ liệu.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <ul>
+                        <li>Trong một máy tính thông thường, là một máy truy cập ngẫu nhiên tuần tự, nơi các bản ghi được phân loại theo nhiều trường, thuật toán sắp xếp Radix được sử dụng. Ví dụ, để sắp xếp theo ba khóa: tháng, ngày và năm. Ta có thể sử dụng sắp xếp Radix ba lần: đầu tiên theo ngày, sau đó theo tháng và cuối cùng là theo năm.</li>
+                        <li>Được sử dụng trong các máy phân loại thẻ đục lỗ (ví dụ thẻ có 80 cột và 12 vị trí đục). Máy sẽ sắp xếp các thẻ bằng cách thu thập lần lượt từ hàng đầu tiên, tiếp theo là hàng thứ hai, và cứ thế tiếp tục.</li>
+                    </ul>
+                `
+            },
+            'dfs': {
+                title: 'Duyệt đồ thị theo chiều sâu (DFS)',
+                body: `
+                    <p>Tìm kiếm theo chiều sâu (Depth First Search - DFS) là một thuật toán để duyệt qua hoặc tìm kiếm cấu trúc dữ liệu dạng cây hoặc đồ thị. Thuật toán bắt đầu tại nút gốc (chọn một số nút tùy ý làm nút gốc trong trường hợp đồ thị) và kiểm tra từng nhánh càng xa càng tốt trước khi quay lui.</p>
+                    
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Kết quả của một DFS là một cây bao trùm (spanning tree). Cây khung (spanning tree) là một đồ thị không có vòng lặp. Để thực hiện duyệt theo DFS, chúng ta cần sử dụng cấu trúc dữ liệu ngăn xếp (Stack) có kích thước tối đa bằng tổng số đỉnh trong biểu đồ.</p>
+                    <p>Để cài đặt DFS, ta cần thực hiện các bước sau:</p>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Lấy một đỉnh bất kỳ trong đồ thị đưa vào ngăn xếp (Stack).</li>
+                        <li><strong>Bước 2:</strong> Lấy giá trị trên cùng (top value) của ngăn xếp để duyệt và thêm vào danh sách đã thăm (visited list).</li>
+                        <li><strong>Bước 3:</strong> Tạo một list bao gồm các đỉnh liền kề của đỉnh đang xét, thêm những đỉnh không có trong visited list vào ngăn xếp.</li>
+                        <li><strong>Bước 4:</strong> Tiếp tục lặp lại bước 2 và bước 3 đến khi ngăn xếp rỗng.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <ul>
+                        <li><strong>Độ phức tạp thời gian:</strong> Thuật toán DFS được biểu diễn dưới dạng $O(V+E)$, trong đó $V$ là số nút (đỉnh) và $E$ là số cạnh.</li>
+                        <li><strong>Độ phức tạp không gian:</strong> Độ phức tạp không gian của thuật toán là $O(V)$ (do sử dụng Stack và Visited list để lưu trữ trạng thái các đỉnh).</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Chúng ta dùng đồ thị vô hướng có 5 đỉnh. Hãy xem thuật toán DFS hoạt động như thế nào.</p>
+                    <img src="/static/dfs_1.png.jpg" alt="Đồ thị ban đầu" class="img-fluid">
+                    
+                    <p>Chúng ta bắt đầu từ đỉnh 0, thuật toán DFS bắt đầu bằng cách đưa nó vào danh sách Visited và đưa tất cả các cạnh liền kề đỉnh đang xét vào ngăn xếp (Stack).</p>
+                    <img src="/static/dfs_2.png.jpg" alt="Bước 1 DFS" class="img-fluid">
+                    
+                    <p>Tiếp theo, chúng ta truy cập phần tử ở đầu ngăn xếp tức là 1 và đi đến các nút liền kề của nó. Vì 0 đã được truy cập, nên 2 là số được xét.</p>
+                    <img src="/static/dfs_3.png.jpg" alt="Bước 2 DFS Stack" class="img-fluid">
+                    <img src="/static/dfs_4.png.jpg" alt="Bước 2 DFS Graph" class="img-fluid">
+                    
+                    <p>Đỉnh 2 có một đỉnh liền kề chưa được thăm là 4, vì vậy chúng ta thêm đỉnh đó vào vị trí đầu của ngăn xếp và duyệt nó.</p>
+                    <img src="/static/dfs_5.png.jpg" alt="Bước 3 DFS" class="img-fluid">
+                    
+                    <p>Sau khi chúng ta duyệt phần tử 3 cuối cùng, nó không có bất kỳ nút liền kề nào chưa được duyệt, vì vậy chúng ta đã hoàn thành tìm kiếm theo chiều sâu trong đồ thị trên.</p>
+                    <img src="/static/dfs_6.png.jpg" alt="Bước 4 DFS" class="img-fluid">
+
+                    <h4>4. Ứng dụng của thuật toán</h4>
+                    <p>Có rất nhiều ứng dụng của thuật toán tìm kiếm theo chiều sâu trong lý thuyết đồ thị. Thuật toán DFS có thể được sử dụng để giải hầu hết các bài toán liên quan đến đồ thị hoặc cây. Một số ứng dụng phổ biến của nó là:</p>
+                    <ul>
+                        <li>Sắp xếp tôpô (Topological sorting), bài toán lập lịch (schedule problems), phát hiện chu trình (cycle detection) trong đồ thị.</li>
+                        <li>Giải các câu đố chỉ có một giải pháp, chẳng hạn như mê cung (maze) hoặc câu đố Sudoku, tất cả đều sử dụng tìm kiếm theo chiều sâu.</li>
+                        <li>Các ứng dụng liên quan đến phân tích mạng, chẳng hạn như phát hiện xem đồ thị có phải là đồ thị hai phía (bipartite graph) hay không.</li>
+                        <li>DFS cũng được sử dụng như một chương trình con trong các thuật toán ghép cặp (matching algorithms) trong lý thuyết đồ thị như thuật toán Hopcroft-Karp.</li>
+                        <li>Được sử dụng trong lập bản đồ tuyến đường (route mapping), lập lịch (scheduling) và tìm cây khung (spanning tree).</li>
+                    </ul>
+                `
+            },
+            'bfs': {
+                title: 'Tìm kiếm theo chiều rộng (BFS)',
+                body: `
+                    <p>Tìm kiếm theo chiều rộng (Breadth-First Search - BFS) là một thuật toán duyệt hoặc tìm kiếm trên cây hoặc đồ thị. BFS duyệt theo chiều rộng, tức là nó sẽ thăm tất cả các đỉnh ở mức hiện tại trước khi chuyển sang mức tiếp theo.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Mục đích của thuật toán là đánh dấu mỗi đỉnh là đã thăm (visited) để tránh các chu trình. Thuật toán sử dụng cấu trúc dữ liệu Hàng đợi (Queue) và hoạt động như sau:</p>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Lấy một đỉnh bất kỳ trong đồ thị thêm vào cuối hàng đợi.</li>
+                        <li><strong>Bước 2:</strong> Lấy phần tử đầu tiên của hàng đợi và thêm nó vào danh sách đã duyệt (visited).</li>
+                        <li><strong>Bước 3:</strong> Tạo một danh sách các đỉnh liền kề của đỉnh đang xét. Thêm những đỉnh không có trong danh sách đã duyệt vào cuối hàng đợi.</li>
+                        <li><strong>Bước 4:</strong> Tiếp tục lặp lại bước 2 và 3 cho đến khi hàng đợi trống.</li>
+                    </ul>
+                    <p><em>Lưu ý:</em> Đồ thị có thể chứa hai thành phần không liên kết khác nhau, vì vậy để đảm bảo rằng mọi đỉnh đều đã được thăm, chúng ta cũng có thể chạy thuật toán BFS trên mọi đỉnh.</p>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <ul>
+                        <li><strong>Độ phức tạp thời gian:</strong> $O(V+E)$, trong đó $V$ là số đỉnh và $E$ là số cạnh.</li>
+                        <li><strong>Độ phức tạp không gian:</strong> $O(V)$, cần không gian để lưu danh sách đỉnh đã thăm và hàng đợi.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Hãy xem cách hoạt động của thuật toán BFS với đồ thị vô hướng có 5 đỉnh:</p>
+                    <img src="/static/bfs1.jpg" alt="Đồ thị ban đầu" class="img-fluid">
+                    
+                    <p>Chúng ta bắt đầu từ đỉnh 0, đặt nó vào danh sách đã duyệt (Visited) và đặt tất cả các đỉnh liền kề của nó (1, 2, 3) vào hàng đợi (Queue).</p>
+                    <img src="/static/bfs2.jpg" alt="Bước 1 BFS" class="img-fluid">
+                    
+                    <p>Tiếp theo, chúng tôi truy cập phần tử đầu của hàng đợi, tức là 1 và đi đến các nút liền kề của nó. Vì 0 đã được truy cập, thay vào đó, chúng tôi truy cập 2.</p>
+                    <img src="/static/bfs3.jpg" alt="Bước 2 BFS" class="img-fluid">
+                    
+                    <p>Đỉnh 2 có một đỉnh liền kề chưa được thăm là 4, vì vậy chúng tôi thêm đỉnh đó vào cuối hàng đợi và thăm 3, ở đầu hàng đợi.</p>
+                    <img src="/static/bfs4.jpg" alt="Bước 3 BFS" class="img-fluid">
+                    
+                    <p>Chỉ còn lại 4 trong hàng đợi vì nút liền kề duy nhất của 3 tức là 0 đã được truy cập. Chúng ta đến thăm nó.</p>
+                    <img src="/static/bfs5.jpg" alt="Bước 4 BFS" class="img-fluid">
+                    
+                    <p>Vì hàng đợi trống, chúng ta đã hoàn thành việc tìm kiếm theo chiều rộng trên đồ thị.</p>
+                    <img src="/static/bfs6.jpg" alt="Bước 5 BFS" class="img-fluid">
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Phù hợp để tìm đường đi ngắn nhất trong đồ thị không trọng số.</li>
+                                <li>Hiệu quả với đồ thị vừa và nhỏ với độ phức tạp $O(V+E)$.</li>
+                                <li>Quản lý quá trình duyệt dễ dàng thông qua cấu trúc hàng đợi (Queue).</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Đòi hỏi nhiều bộ nhớ ($O(V)$) hơn so với DFS nếu đồ thị có bề ngang rất lớn (như dạng cây lan rộng), vì phải lưu toàn bộ đỉnh của một mức vào hàng đợi.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <p>Tìm kiếm theo chiều rộng là một phương pháp duyệt đồ thị đơn giản có phạm vi ứng dụng cao. Một số ứng dụng của BFS:</p>
+                    <ul>
+                        <li><strong>Trình thu thập dữ liệu trong Công cụ Tìm kiếm (Web Crawler):</strong> Là thuật toán chính được sử dụng để lập chỉ mục các trang web. Bắt đầu từ trang nguồn và đi theo tất cả các liên kết được liên kết với nó.</li>
+                        <li><strong>Mạng peer-to-peer (P2P):</strong> Tìm tất cả các nút lân cận trong mạng P2P (ví dụ: BitTorrent sử dụng BFS để giao tiếp).</li>
+                        <li><strong>Hệ thống định vị GPS:</strong> Thuật toán tốt nhất để xác định đường đi ngắn nhất từ vị trí này đến vị trí khác.</li>
+                        <li><strong>Thuật toán Ford-Fulkerson:</strong> Dùng BFS để tìm luồng cực đại trong mạng.</li>
+                        <li><strong>Đường đi ngắn nhất & Cây khung tối thiểu:</strong> Cho đồ thị không có trọng số.</li>
+                    </ul>
+                `
+            },
+            'kruskal': {
+                title: 'Cây khung Kruskal',
+                body: `
+                    <p>Thuật toán Kruskal là một thuật toán tham lam được sử dụng để tìm cây bao trùm tối thiểu (Minimum Spanning Tree - MST) trong đồ thị. Cây bao trùm tối thiểu là một cây bao trùm có tổng trọng số các cạnh nhỏ hơn hoặc bằng trọng số của mọi cây bao trùm khác.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Thuật toán Kruskal lựa chọn tham lam bằng cách chọn cạnh có trọng số nhỏ nhất mà không gây ra chu trình trong MST đã được xây dựng. Các bước thực hiện:</p>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Sắp xếp tất cả các cạnh theo thứ tự trọng số tăng dần (không giảm dần).</li>
+                        <li><strong>Bước 2:</strong> Chọn cạnh ngắn nhất. Kiểm tra xem nó có tạo thành một chu trình với cây bao trùm đã được hình thành cho đến nay hay không.</li>
+                        <li><strong>Bước 3:</strong> Nếu chu trình không được hình thành, hãy đưa cạnh này vào MST. Nếu không, hãy loại bỏ nó.</li>
+                        <li><strong>Bước 4:</strong> Lặp lại bước 2 và 3 cho đến khi có $(V-1)$ cạnh trong cây bao trùm (với V là số đỉnh).</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p><strong>Độ phức tạp thời gian</strong></p>
+                    <ul>
+                        <li>Thời gian thực thi là $O(E \\log E)$ hoặc $O(E \\log V)$, trong đó $E$ là số cạnh và $V$ là số đỉnh.</li>
+                    </ul>
+                    <p><strong>Độ phức tạp không gian</strong></p>
+                    <ul>
+                        <li>Không gian phụ trợ: $O(V+E)$ để lưu trữ đồ thị và cấu trúc phục vụ thuật toán.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Cho đồ thị với $N = 6$ đỉnh và các cạnh (đỉnh u, đỉnh v, trọng số):</p>
+                    <ul>
+                        <li><strong>Đầu vào:</strong> <code class="code-block">edges = { {1, 2, 1}, {2, 3, 4}, {1, 4, 3}, {4, 5, 6}, {2, 5, 2}, {3, 5, 5}, {5, 6, 6} }</code></li>
+                    </ul>
+                    <img src="/static/Kru.jpg" alt="Minh họa thuật toán Kruskal" class="img-fluid">
+                    <ul>
+                        <li><strong>Đầu ra:</strong> Cây bao trùm tối thiểu (MST) bao gồm các cạnh: <code class="code-block">{ {1, 2, 1}, {1, 4, 3}, {2, 5, 2}, {2, 3, 4}, {5, 6, 6} }</code></li>
+                    </ul>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Rất hiệu quả với các đồ thị thưa (số lượng cạnh $E$ nhỏ).</li>
+                                <li>Dễ cài đặt khi kết hợp với cấu trúc dữ liệu Disjoint Set (Union-Find).</li>
+                                <li>Luôn tìm được cây khung nhỏ nhất tối ưu do tính chất của thuật toán tham lam.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Chậm hơn thuật toán Prim trên các đồ thị dày (số lượng cạnh $E$ xấp xỉ $V^2$) do phải mất thời gian sắp xếp toàn bộ danh sách cạnh từ đầu.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <ul>
+                        <li>Thiết kế mạng lưới (mạng viễn thông, mạng điện, mạng máy tính) với chi phí cáp nối thấp nhất.</li>
+                        <li>Phân cụm dữ liệu (Clustering) trong học máy (Machine Learning).</li>
+                        <li>Xây dựng mạng lưới đường bộ, đường sắt nối các điểm với chi phí tối ưu nhất.</li>
+                    </ul>
+                `
+            },
+            'dijkstra': {
+                title: 'Dijkstra - Đường đi ngắn nhất',
+                body: `
+                    <p>Cho một đồ thị và một đỉnh nguồn trong đồ thị, thuật toán Dijkstra tìm đường đi ngắn nhất từ đỉnh nguồn đến tất cả các đỉnh khác trong đồ thị. Đây là một thuật toán phổ biến để giải quyết bài toán tìm đường đi ngắn nhất từ một đỉnh nguồn duy nhất với trọng số cạnh không âm trong đồ thị. Thuật toán này được nhà khoa học máy tính người Hà Lan Edsger W. Dijkstra đề xuất vào năm 1956.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Khởi tạo đồ thị với nút nguồn nhận giá trị 0 và tất cả các nút khác nhận giá trị vô cực ($\\infty$). Bắt đầu với nút nguồn là "nút hiện tại".</li>
+                        <li><strong>Bước 2:</strong> Truy cập tất cả các nút lân cận của nút hiện tại và cập nhật giá trị của chúng thành tổng tích lũy trọng số (khoảng cách) từ nguồn. Nếu giá trị hiện tại của một nút lân cận nhỏ hơn tổng tích lũy mới, giá trị của nó sẽ giữ nguyên. Đánh dấu "nút hiện tại" là đã hoàn thành.</li>
+                        <li><strong>Bước 3:</strong> Đánh dấu nút có giá trị tối thiểu chưa hoàn thành là "nút hiện tại".</li>
+                        <li><strong>Bước 4:</strong> Lặp lại bước 2 và 3 cho đến khi tất cả các nút được hoàn thành.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <p>Độ phức tạp của thuật toán Dijkstra phụ thuộc vào cách biểu diễn đồ thị và cách triển khai hàng đợi ưu tiên:</p>
+                    <ul>
+                        <li><strong>Độ phức tạp thời gian:</strong> 
+                            <ul>
+                                <li>Nếu sử dụng danh sách kề và hàng đợi là một min-heap, độ phức tạp là $O(E \\log V)$, với $E$ là số cạnh và $V$ là số đỉnh.</li>
+                                <li>Nếu sử dụng ma trận kề và hàng đợi là một heap, độ phức tạp sẽ là $O(V^2)$.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Hãy thử tìm đường đi ngắn nhất bắt đầu từ nguồn là <strong>B</strong> đến các nút khác (chẳng hạn đích là F) trong đồ thị sau:</p>
+                    <img src="/static/dijk1.jpg" alt="Đồ thị ban đầu Dijkstra" class="img-fluid">
+
+                    <p>Đầu tiên, chúng ta khởi tạo thuật toán như sau: đặt B làm nút gốc (nguồn). Chúng ta đặt khoảng cách giữa B và tất cả các nút khác là vô cực ($\\infty$), coi đó là giá trị khoảng cách ban đầu mang tính tạm thời. Đặt giá trị cho B bằng 0 vì đó là khoảng cách đến chính nó.</p>
+                    <img src="/static/dijk2.jpg" alt="Khởi tạo đồ thị Dijkstra" class="img-fluid">
+                    
+                    <p>Tiếp theo, chúng ta thực hiện các bước sau một cách lặp đi lặp lại:</p>
+                    <ol>
+                        <li>Chọn nút có giá trị nhỏ nhất làm “nút hiện tại” và duyệt qua tất cả các nút lân cận của nó. Khi duyệt qua từng nút lân cận, ta cập nhật giá trị tạm thời của chúng từ vô cực đến trọng số cạnh bắt đầu từ nút nguồn.</li>
+                        <li>Sau khi tất cả các nút lân cận của nút hiện tại được duyệt qua, ta đánh dấu nút hiện tại là "đã duyệt". Khi một nút được đánh dấu là "đã duyệt", giá trị của nó chính là đường đi ngắn nhất từ đích đến.</li>
+                        <li>Thuật toán quay lại bước 1 và chọn nút có giá trị nhỏ nhất.</li>
+                    </ol>
+
+                    <p>Trong đồ thị của chúng ta, B có ba láng giềng là A, D và E. Hãy lần lượt thăm từng láng giềng bắt đầu từ nút gốc và cập nhật giá trị của chúng dựa trên trọng số cạnh (vòng lặp 1):</p>
+                    <img src="/static/dijk3.jpg" alt="Duyệt láng giềng của B" class="img-fluid">
+
+                    <p>Ở bước lặp thứ 2, chúng ta chọn nút có giá trị nhỏ nhất, lần này là <strong>E</strong> (2.8). Các nút lân cận của nó là C, D và G (B bị loại trừ vì đã thăm rồi). Hãy cập nhật giá trị của các nút lân cận của E:</p>
+                    <ul>
+                        <li>Chúng ta đặt giá trị của C là 5.6 vì giá trị của nó là tổng tích lũy của trọng số từ B đến C ($2.8 + 2.8$).</li>
+                        <li>Điều tương tự cũng áp dụng cho G ($2.8 + 7 = 9.8$).</li>
+                        <li>Tuy nhiên, giá trị của D hiện tại là 3.5, trong khi tính qua E thì đáng lẽ phải là $3.5 + 2.8 = 6.3$. Quy tắc là nếu tổng tích lũy mới lớn hơn giá trị hiện tại của nút, chúng ta sẽ không cập nhật nó. D vẫn giữ là 3.5 vì nó ghi nhận đường ngắn nhất nối thẳng tới B.</li>
+                    </ul>
+                    <img src="/static/dijk4.jpg" alt="Duyệt láng giềng của E" class="img-fluid">
+                    
+                    <p>Chúng ta tiếp tục theo cách này cho đến khi tất cả các nút được thăm dò. Khi điều đó cuối cùng xảy ra, chúng ta sẽ có khoảng cách ngắn nhất từ B đến mỗi nút.</p>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Hoạt động hiệu quả và cực kỳ tối ưu để tìm đường đi ngắn nhất trên đồ thị có trọng số.</li>
+                                <li>Độ phức tạp $O(E \\log V)$ giúp thuật toán xử lý rất nhanh ngay cả với những đồ thị có số lượng cạnh vừa và thưa.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Thuật toán Dijkstra chỉ hoạt động tốt khi trọng số của các cạnh là không âm. Nếu có trọng số âm, bạn nên sử dụng thuật toán khác như Bellman-Ford.</li>
+                                <li>Phải duyệt toàn bộ các hướng theo vòng tròn thay vì có mục tiêu định hướng cụ thể (như thuật toán A*).</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng & Lưu ý</h4>
+                    <ul>
+                        <li><strong>Lưu ý quan trọng:</strong> Dijkstra không nhất thiết tìm thấy đường đi ngắn nhất nếu đồ thị có chứa chu trình âm (negative cycle).</li>
+                        <li><strong>Ứng dụng:</strong>
+                            <ul>
+                                <li>Sử dụng trong các giao thức định tuyến mạng (Routing Protocols) như IS-IS và OSPF.</li>
+                                <li>Tìm đường đi ngắn nhất hoặc định tuyến vị trí trong hệ thống định vị bản đồ số (Google Maps, GPS).</li>
+                                <li>Ứng dụng trong việc quy hoạch đô thị, giao thông để thiết lập lộ trình di chuyển với chi phí rẻ nhất/thời gian nhanh nhất.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                `
+            },
+            'bellman': {
+                title: 'Bellman-Ford - Xử lý trọng số âm',
+                body: `
+                    <p>Thuật toán Bellman-Ford là thuật toán dùng để tìm đường đi ngắn nhất từ một đỉnh tới các đỉnh còn lại trong đồ thị có trọng số. Cùng một vấn đề nhưng thuật toán Bellman-Ford chậm hơn so với thuật toán Dijkstra nhưng lại đa năng hơn ở chỗ thuật toán có thể xử lý trên đồ thị có cạnh mang trọng số âm.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <ul>
+                        <li>Khởi tạo khoảng cách từ đỉnh gốc đến chính nó là 0, và khoảng cách đến tất cả các đỉnh khác là vô cực ($\\infty$).</li>
+                        <li>Thực hiện lặp $|V| - 1$ lần (với $|V|$ là số đỉnh của đồ thị). Trong mỗi lần lặp, duyệt qua tất cả các cạnh của đồ thị và cập nhật (relax) khoảng cách. Nếu khoảng cách đi qua đỉnh trung gian nhỏ hơn khoảng cách hiện tại, ta tiến hành cập nhật.</li>
+                        <li>Sau $|V| - 1$ lần lặp, thực hiện duyệt thêm một lần nữa. Nếu vẫn còn cạnh có thể tối ưu (khoảng cách vẫn giảm), điều đó chứng tỏ đồ thị có <strong>chu trình âm</strong> (negative cycle) và thuật toán sẽ dừng lại.</li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <ul>
+                        <li><strong>Độ phức tạp thời gian:</strong>
+                            <ul>
+                                <li>Trường hợp tốt nhất: $O(|E|)$</li>
+                                <li>Trường hợp trung bình và xấu nhất: $O(|V| \\cdot |E|)$, trong đó $|V|$ là số đỉnh và $|E|$ là số cạnh.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Độ phức tạp không gian:</strong> $O(|V|)$ để lưu mảng khoảng cách của các đỉnh.</li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Tìm đường đi ngắn nhất giữa đỉnh 1 với các đỉnh còn lại trong đồ thị có hướng (chỉ đi từ đỉnh có số thứ tự thấp hơn tới đỉnh có số thứ tự cao hơn). Gốc là đỉnh 1.</p>
+                    <ul>
+                        <li><strong>Khởi tạo:</strong> Gán khoảng cách đỉnh 1 là 0, các đỉnh khác là $\\infty$.</li>
+                    </ul>
+                    <img src="/static/bf1.jpg" alt="Khởi tạo Bellman-Ford" class="img-fluid">
+                    
+                    <ul>
+                        <li><strong>Lần duyệt 1:</strong> Ta cập nhật được đường đi ngắn nhất thông qua các cạnh (1, 2); (1, 3); (1, 4).</li>
+                    </ul>
+                    <img src="/static/bf2.jpg" alt="Lần duyệt 1 Bellman-Ford" class="img-fluid">
+                    
+                    <ul>
+                        <li><strong>Lần duyệt 2:</strong> Tiếp tục cập nhật, cạnh (2, 5) và (3, 4) là các cạnh tối ưu được cập nhật lại khoảng cách.</li>
+                        <li><strong>Lần duyệt 3:</strong> Chỉ có cạnh (4, 5) cải tiến đường đi tối ưu.</li>
+                        <li><strong>Lần duyệt 4:</strong> Không còn cạnh nào có thể tối ưu hóa bất kỳ đường đi ngắn nhất nào nữa. Tới đây, ta hoàn toàn có thể dừng duyệt (vì chắc chắn việc không còn cạnh có thể tối ưu cũng đồng nghĩa với việc không có chu trình âm trong đồ thị).</li>
+                    </ul>
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Đa năng hơn Dijkstra vì có thể xử lý tốt trên đồ thị có cạnh mang trọng số âm.</li>
+                                <li>Có khả năng phát hiện được chu trình âm (negative weight cycle) trong đồ thị.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Chậm hơn thuật toán Dijkstra. Độ phức tạp $O(|V| \\cdot |E|)$ khiến nó không phù hợp cho các đồ thị quá lớn.</li>
+                                <li>Nhược điểm trong cấu hình mạng: Không nhân rộng tốt, các thay đổi của tô-pô mạng không được ghi nhận nhanh do các cập nhật được lan truyền theo từng nút một.</li>
+                                <li>Gặp vấn đề "Đếm dần đến vô cùng" (Count to Infinity) nếu liên kết hỏng làm một nút bị tách khỏi mạng, gây ra việc định tuyến thành vòng tròn.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <ul>
+                        <li>Thuật toán Bellman-Ford (biến thể phân tán) được dùng trong các giao thức định tuyến vector khoảng cách (Distance Vector Routing Protocol), chẳng hạn giao thức RIP (Routing Information Protocol).</li>
+                        <li>Ứng dụng trong việc tính toán định tuyến giữa các nút mạng (các thiết bị định tuyến) trong một hệ thống tự động (Autonomous System), ví dụ một tập các mạng IP thuộc sở hữu của một nhà cung cấp dịch vụ Internet (ISP). Mỗi nút sẽ tính toán và gửi bảng thông tin khoảng cách cho các nút lân cận để cập nhật đường đi ngắn nhất.</li>
+                    </ul>
+                `
+            },
+            'prim': {
+                title: 'Thuật toán Prim',
+                body: `
+                    <p>Thuật toán Prim là một thuật toán tham lam được sử dụng để tìm Cây bao trùm tối thiểu (Minimum Spanning Tree - MST) của một đồ thị vô hướng, liên thông. MST là một tập con của các cạnh nối tất cả các đỉnh trong đồ thị với tổng trọng số cạnh nhỏ nhất có thể.</p>
+
+                    <h4>1. Tư tưởng thuật toán</h4>
+                    <p>Ý tưởng cơ bản của thuật toán Prim như sau:</p>
+                    <ul>
+                        <li><strong>Bước 1:</strong> Chọn một đỉnh $v$ bất kỳ làm đỉnh bắt đầu và đưa đỉnh $v$ vào cây khung.</li>
+                        <li><strong>Bước 2:</strong> Thêm tất cả các cạnh nối với $v$ vào danh sách cạnh đang xét.</li>
+                        <li><strong>Bước 3:</strong> Xét các cạnh trong danh sách đến khi hết:
+                            <ul>
+                                <li><strong>Bước 3.1:</strong> Lấy ra cạnh có trọng số nhỏ nhất nối từ $v_1$ đến một đỉnh $v_2$ chưa nằm trong cây khung. Đưa cạnh này và đỉnh $v_2$ vào cây khung.</li>
+                                <li><strong>Bước 3.2:</strong> Đưa các cạnh nối từ đỉnh $v_2$ đến các đỉnh chưa nằm trong cây khung vào danh sách cạnh đang xét.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>2. Phân tích độ phức tạp</h4>
+                    <ul>
+                        <li><strong>Độ phức tạp về thời gian:</strong>
+                            <ul>
+                                <li>Việc xây dựng danh sách kề mất thời gian $O(E)$, trong đó $E$ là số cạnh.</li>
+                                <li>Mỗi cạnh được xử lý tối đa một lần và các thao tác trên hàng đợi ưu tiên (min-heap) mất thời gian $O(\\log V)$, trong đó $V$ là số đỉnh.</li>
+                                <li>Độ phức tạp thời gian tổng thể là $O((V+E)\\log V)$.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Độ phức tạp không gian:</strong>
+                            <ul>
+                                <li>Độ phức tạp về không gian là $O(V+E)$ do sử dụng danh sách kề và hàng đợi ưu tiên.</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>3. Ví dụ minh họa</h4>
+                    <p>Cho đồ thị $G=(V,E)$ có $V=6$ đỉnh và $E=10$ cạnh. Ta tạo ra 2 tập hợp $U$ (chứa các đỉnh của cây khung) và $T$ (chứa các cạnh của cây khung nhỏ nhất). Ban đầu $U = \\{\\emptyset\\}$ và $T = \\{\\emptyset\\}$.</p>
+                    <img src="/static/p1.jpg" alt="Đồ thị ban đầu Prim" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 1 & 2:</strong> Chọn ngẫu nhiên đỉnh 1 đưa vào $U$. Lúc này $U = \\{1\\}$, $T = \\{\\emptyset\\}$.</li>
+                    </ul>
+                    <img src="/static/p2.jpg" alt="Prim Bước 1" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 3:</strong> Tìm cạnh nhỏ nhất có 1 đỉnh trong $U$. Ta tìm được cạnh (1, 3) với trọng số là 1. Đưa 3 vào $U$. $U = \\{1, 3\\}$, $T = \\{(1, 3)\\}$.</li>
+                    </ul>
+                    <img src="/static/p3.jpg" alt="Prim Bước 3" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 4:</strong> Tìm tiếp cạnh nhỏ nhất kết nối từ $U$ ra ngoài. Đó là cạnh (3, 6) có trọng số 4. $U = \\{1, 3, 6\\}$, $T = \\{(1, 3), (3, 6)\\}$.</li>
+                    </ul>
+                    <img src="/static/p4.jpg" alt="Prim Bước 4" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 5:</strong> Tập $U$ mới có 3/6 đỉnh. Cạnh nhỏ nhất tiếp theo là (6, 4) trọng số 2. $U = \\{1, 3, 6, 4\\}$, $T = \\{(1, 3), (3, 6), (6, 4)\\}$.</li>
+                    </ul>
+                    <img src="/static/p5.jpg" alt="Prim Bước 5" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 6:</strong> Cạnh nhỏ nhất tiếp theo là (3, 2) trọng số 5. $U = \\{1, 3, 6, 4, 2\\}$, $T = \\{(1, 3), (3, 6), (6, 4), (3, 2)\\}$.</li>
+                    </ul>
+                    <img src="/static/p6.jpg" alt="Prim Bước 6" class="img-fluid">
+
+                    <ul>
+                        <li><strong>Bước 7:</strong> Tập $U$ có 5/6 đỉnh. Ta chọn cạnh (2, 5) trọng số 3. Lúc này $U$ đã chứa đủ $6/6$ đỉnh nên thuật toán kết thúc.</li>
+                    </ul>
+                    <img src="/static/p7.jpg" alt="Prim Bước 7" class="img-fluid">
+
+                    <p><strong>Kết quả:</strong> Cây bao trùm tối thiểu (MST) hoàn chỉnh với các cạnh $T = \\{(1, 3), (3, 6), (6, 4), (3, 2), (2, 5)\\}$.</p>
+                    <img src="/static/p8.jpg" alt="Kết quả Prim" class="img-fluid">
+
+                    <h4>4. Ưu và nhược điểm</h4>
+                    <ul>
+                        <li><strong>Ưu điểm:</strong>
+                            <ul>
+                                <li>Hoạt động hiệu quả và có tốc độ nhanh trên các đồ thị dày (dense graphs) khi số lượng cạnh $E$ xấp xỉ $V^2$.</li>
+                                <li>Luôn xây dựng một cây liên thông tại mọi bước của thuật toán.</li>
+                            </ul>
+                        </li>
+                        <li><strong>Nhược điểm:</strong>
+                            <ul>
+                                <li>Cần cấu trúc dữ liệu Priority Queue (Hàng đợi ưu tiên) phức tạp để đạt được hiệu suất tốt nhất.</li>
+                                <li>Chậm hơn thuật toán Kruskal trên các đồ thị thưa (sparse graphs).</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <h4>5. Ứng dụng của thuật toán</h4>
+                    <p>Với bài toán tìm cây khung nhỏ nhất, chúng ta có thể áp dụng để giải quyết & tối ưu rất nhiều bài toán trong thực tế. Ví dụ với bài toán lắp đặt hệ thống mạng cho 1 trường học:</p>
+                    <ul>
+                        <li><strong>Yêu cầu:</strong> Tất cả các phòng cần có kết nối internet và biết trước khoảng cách giữa 2 phòng bất kỳ.</li>
+                        <li><strong>Bài toán:</strong> Làm sao lắp đặt hệ thống mạng cho trường học này với chi phí tối thiểu (giả sử chi phí tỉ lệ thuận với khoảng cách). Thuật toán Prim sẽ tìm ra các đường nối tối ưu để kết nối tất cả các phòng mà tốn ít mét dây mạng nhất.</li>
+                    </ul>
+                `
+            }
+        };
+
+        function loadArticle(algoId) {
+            document.querySelectorAll('.algo-list li').forEach(li => li.classList.remove('active'));
+            document.getElementById('btn-' + algoId).classList.add('active');
+
+            const data = articles[algoId];
+            const container = document.getElementById('article-container');
+
+            if (data) {
+                container.innerHTML = `
+                    <h1 class="article-title">${data.title}</h1>
+                    <div class="article-body">${data.body}</div>
+                `;
+
+                // Kích hoạt MathJax xử lý lại công thức sau khi render HTML mới
+                if (window.MathJax) {
+                    MathJax.typesetPromise([container]).catch(function (err) {
+                        console.log('MathJax error: ', err.message);
+                    });
+                }
+            }
+        }
+
+        window.onload = () => loadArticle('prim'); // Mặc định mở trang Prim khi load
+    </script>
+</body>
+
+</html>
